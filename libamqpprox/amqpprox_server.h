@@ -17,6 +17,7 @@
 #define BLOOMBERG_AMQPPROX_SERVER
 
 #include <amqpprox_authinterceptinterface.h>
+#include <amqpprox_dnsresolver.h>
 #include <amqpprox_maybesecuresocketadaptor.h>
 #include <amqpprox_simpleconnectionselector.h>
 
@@ -46,16 +47,14 @@ class Server {
     std::unordered_map<uint64_t, SessionPtr> d_sessions;
     std::unordered_set<SessionPtr>           d_deletingSessions;
     std::unordered_map<int, boost::asio::ip::tcp::acceptor> d_listeningSockets;
-    ConnectionSelector *d_connectionSelector_p;
-    // HELD NOT OWNED
-    EventSource *d_eventSource_p;
-    // HELD NOT OWNED
-    BufferPool *d_bufferPool_p;
-    // HELD NOT OWNED
-    std::mutex                              d_mutex;
-    std::shared_ptr<HostnameMapper>         d_hostnameMapper;
+    DNSResolver                                             d_dnsResolver;
+    ConnectionSelector *            d_connectionSelector_p;  // HELD NOT OWNED
+    EventSource *                   d_eventSource_p;         // HELD NOT OWNED
+    BufferPool *                    d_bufferPool_p;          // HELD NOT OWNED
+    std::mutex                      d_mutex;
+    std::shared_ptr<HostnameMapper> d_hostnameMapper;
+    std::string                     d_localHostname;
     std::shared_ptr<AuthInterceptInterface> d_authIntercept;
-    std::string                             d_localHostname;
 
   public:
     Server(ConnectionSelector *selector,

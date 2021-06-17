@@ -42,6 +42,7 @@ Server::Server(ConnectionSelector *selector,
 , d_sessions()
 , d_deletingSessions()
 , d_listeningSockets()
+, d_dnsResolver(d_ioService)
 , d_connectionSelector_p(selector)
 , d_eventSource_p(eventSource)
 , d_bufferPool_p(bufferPool)
@@ -50,6 +51,9 @@ Server::Server(ConnectionSelector *selector,
 , d_hostnameMapper()
 , d_localHostname(boost::asio::ip::host_name())
 {
+    d_dnsResolver.setCacheTimeout(1000);
+    d_dnsResolver.startCleanupTimer();
+
     d_ingressTlsContext.set_options(
         boost::asio::ssl::context::default_workarounds);
     d_egressTlsContext.set_options(
@@ -63,6 +67,7 @@ Server::Server(ConnectionSelector *selector,
 
 Server::~Server()
 {
+    d_dnsResolver.stopCleanupTimer();
     closeListeners();
 
     // Ensure the io_service is stopped fully
@@ -186,6 +191,7 @@ void Server::doAccept(int port, bool secure)
                                               d_connectionSelector_p,
                                               d_eventSource_p,
                                               d_bufferPool_p,
+                                              &d_dnsResolver,
                                               d_hostnameMapper,
                                               d_localHostname);
 
