@@ -16,6 +16,7 @@
 #include <amqpprox_server.h>
 
 #include <amqpprox_bufferpool.h>
+#include <amqpprox_defaultauthintercept.h>
 #include <amqpprox_eventsource.h>
 #include <amqpprox_hostnamemapper.h>
 #include <amqpprox_logging.h>
@@ -45,6 +46,7 @@ Server::Server(ConnectionSelector *selector,
 , d_eventSource_p(eventSource)
 , d_bufferPool_p(bufferPool)
 , d_mutex()
+, d_authIntercept(std::make_shared<DefaultAuthIntercept>(d_ioService))
 , d_hostnameMapper()
 , d_localHostname(boost::asio::ip::host_name())
 {
@@ -285,6 +287,11 @@ boost::asio::ssl::context &Server::ingressTlsContext()
 boost::asio::ssl::context &Server::egressTlsContext()
 {
     return d_egressTlsContext;
+}
+
+boost::asio::io_service &Server::ioService()
+{
+    return d_ioService;
 }
 
 }  // namespace amqpprox

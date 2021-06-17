@@ -16,6 +16,7 @@
 #ifndef BLOOMBERG_AMQPPROX_SERVER
 #define BLOOMBERG_AMQPPROX_SERVER
 
+#include <amqpprox_authinterceptinterface.h>
 #include <amqpprox_maybesecuresocketadaptor.h>
 #include <amqpprox_simpleconnectionselector.h>
 
@@ -51,9 +52,10 @@ class Server {
     // HELD NOT OWNED
     BufferPool *d_bufferPool_p;
     // HELD NOT OWNED
-    std::mutex                      d_mutex;
-    std::shared_ptr<HostnameMapper> d_hostnameMapper;
-    std::string d_localHostname;
+    std::mutex                              d_mutex;
+    std::shared_ptr<HostnameMapper>         d_hostnameMapper;
+    std::shared_ptr<AuthInterceptInterface> d_authIntercept;
+    std::string                             d_localHostname;
 
   public:
     Server(ConnectionSelector *selector,
@@ -105,6 +107,9 @@ class Server {
     boost::asio::ssl::context &ingressTlsContext();
 
     boost::asio::ssl::context &egressTlsContext();
+
+    boost::asio::io_service &ioService();
+    ///< Retrieve the io service for the server object
 
   private:
     void doAccept(int port, bool secure);

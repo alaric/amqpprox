@@ -82,7 +82,9 @@ add_library(libamqpprox STATIC
     amqpprox_methods_start.cpp
     amqpprox_methods_startok.cpp
     amqpprox_methods_secure.cpp
-    amqpprox_methods_secureok.cpp)
+    amqpprox_methods_secureok.cpp
+    amqpprox_authinterceptinterface.cpp
+    amqpprox_defaultauthintercept.cpp)
 
 target_link_libraries(libamqpprox LINK_PUBLIC ${LIBAMQPPROX_LIBS})
 
