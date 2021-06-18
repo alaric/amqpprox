@@ -21,7 +21,7 @@
 #include <iostream>
 
 #include <boost/asio.hpp>
-#include <boost/beast.hpp>
+#include <boost/system/error_code.hpp>
 
 using Bloomberg::amqpprox::DefaultAuthIntercept;
 
@@ -37,9 +37,9 @@ TEST(DefaultAuthIntercept, SendRequest)
     boost::asio::io_service ioService;
     DefaultAuthIntercept    defaultAuth(ioService);
     const std::string       requestBody = "{\"vhost\":\"test-vhost\"}";
-    auto responseCb = [](const boost::beast::error_code &returnCode,
-                         const std::string &             responseText) {
-        ASSERT_EQ(returnCode, boost::beast::error_code());
+    auto responseCb = [](const boost::system::error_code &returnCode,
+                         const std::string &              responseText) {
+        ASSERT_EQ(returnCode, boost::system::error_code());
         ASSERT_EQ(responseText, "Default auth gate service");
     };
     defaultAuth.sendRequest(requestBody, responseCb);

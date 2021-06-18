@@ -16,6 +16,7 @@
 #ifndef BLOOMBERG_AMQPPROX_SESSION
 #define BLOOMBERG_AMQPPROX_SESSION
 
+#include <amqpprox_authinterceptinterface.h>
 #include <amqpprox_backend.h>
 #include <amqpprox_buffer.h>
 #include <amqpprox_bufferhandle.h>
@@ -77,18 +78,20 @@ class Session : public std::enable_shared_from_this<Session> {
     TimePoint                d_egressStartedAt;
     std::vector<boost::asio::ip::tcp::endpoint> d_resolvedEndpoints;
     uint32_t                                    d_resolvedEndpointsIndex;
+    std::shared_ptr<AuthInterceptInterface>     d_authIntercept;
 
   public:
     // CREATORS
-    Session(boost::asio::io_service &              ioservice,
-            MaybeSecureSocketAdaptor &&            serverSocket,
-            MaybeSecureSocketAdaptor &&            clientSocket,
-            ConnectionSelector *                   connectionSelector,
-            EventSource *                          eventSource,
-            BufferPool *                           bufferPool,
-            DNSResolver *                          dnsResolver,
-            const std::shared_ptr<HostnameMapper> &hostnameMapper,
-            std::string_view                       localHostname);
+    Session(boost::asio::io_service &                      ioservice,
+            MaybeSecureSocketAdaptor &&                    serverSocket,
+            MaybeSecureSocketAdaptor &&                    clientSocket,
+            ConnectionSelector *                           connectionSelector,
+            EventSource *                                  eventSource,
+            BufferPool *                                   bufferPool,
+            DNSResolver *                                  dnsResolver,
+            const std::shared_ptr<HostnameMapper> &        hostnameMapper,
+            std::string_view                               localHostname,
+            const std::shared_ptr<AuthInterceptInterface> &authIntercept);
 
     ~Session();
 

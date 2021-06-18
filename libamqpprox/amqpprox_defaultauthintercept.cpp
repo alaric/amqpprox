@@ -24,7 +24,7 @@
 #include <thread>
 
 #include <boost/asio.hpp>
-#include <boost/beast.hpp>
+#include <boost/system/error_code.hpp>
 
 namespace Bloomberg {
 namespace amqpprox {
@@ -38,11 +38,11 @@ void DefaultAuthIntercept::sendRequest(const std::string,
                                        const ReceiveResponseCb &responseCb)
 {
     auto cb = [responseCb] {
-        responseCb(boost::beast::error_code(), "Default auth gate service");
+        responseCb(boost::system::error_code(), "Default auth gate service");
     };
     boost::asio::post(d_ioService,
                       std::bind(responseCb,
-                                boost::beast::error_code(),
+                                boost::system::error_code(),
                                 "Default auth gate service"));
 }
 

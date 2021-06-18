@@ -15,6 +15,7 @@
 */
 #include <amqpprox_session.h>
 
+#include <amqpprox_authinterceptinterface.h>
 #include <amqpprox_backend.h>
 #include <amqpprox_bufferhandle.h>
 #include <amqpprox_bufferpool.h>
@@ -71,7 +72,8 @@ Session::Session(boost::asio::io_service &              ioservice,
                  BufferPool *                           bufferPool,
                  DNSResolver *                          dnsResolver,
                  const std::shared_ptr<HostnameMapper> &hostnameMapper,
-                 std::string_view                       localHostname)
+                 std::string_view                       localHostname,
+                 const std::shared_ptr<AuthInterceptInterface> &authIntercept)
 : d_ioService(ioservice)
 , d_serverSocket(std::move(serverSocket))
 , d_clientSocket(std::move(clientSocket))
@@ -96,6 +98,7 @@ Session::Session(boost::asio::io_service &              ioservice,
 , d_egressStartedAt()
 , d_resolvedEndpoints()
 , d_resolvedEndpointsIndex(0)
+, d_authIntercept(authIntercept)
 {
     boost::system::error_code ec;
     d_serverSocket.setDefaultOptions(ec);

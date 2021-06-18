@@ -22,7 +22,7 @@
 #include <string>
 
 #include <boost/asio.hpp>
-#include <boost/beast.hpp>
+#include <boost/system/error_code.hpp>
 
 namespace Bloomberg {
 namespace amqpprox {
@@ -36,8 +36,8 @@ class AuthInterceptInterface {
     mutable std::mutex       d_mutex;
 
   public:
-    typedef std::function<void(const boost::beast::error_code &returnCode,
-                               const std::string &             responseText)>
+    typedef std::function<void(const boost::system::error_code &returnCode,
+                               const std::string &              responseText)>
         ReceiveResponseCb;
 
     // CREATORS
