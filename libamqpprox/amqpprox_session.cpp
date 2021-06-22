@@ -407,6 +407,19 @@ void Session::establishConnection()
         return;
     }
 
+    auto self(shared_from_this());
+    auto authResponseCb = [this, self](const boost::system::error_code &ec,
+                                       const std::string &responseText) {
+        if (ec) {
+            LOG_ERROR << "Unauthorized client "
+                      << "error_code: " << ec
+                      << ", Response: " << responseText;
+            disconnect(true);
+            return;
+        }
+    };
+    std::string requestData = "{}";
+    d_authIntercept->sendRequest(requestData, authResponseCb);
     attemptConnection(connectionManager);
 }
 

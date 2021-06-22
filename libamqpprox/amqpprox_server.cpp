@@ -47,9 +47,9 @@ Server::Server(ConnectionSelector *selector,
 , d_eventSource_p(eventSource)
 , d_bufferPool_p(bufferPool)
 , d_mutex()
-, d_authIntercept(std::make_shared<DefaultAuthIntercept>(d_ioService))
 , d_hostnameMapper()
 , d_localHostname(boost::asio::ip::host_name())
+, d_authIntercept(std::make_shared<DefaultAuthIntercept>(d_ioService))
 {
     d_dnsResolver.setCacheTimeout(1000);
     d_dnsResolver.startCleanupTimer();
@@ -193,7 +193,8 @@ void Server::doAccept(int port, bool secure)
                                               d_bufferPool_p,
                                               &d_dnsResolver,
                                               d_hostnameMapper,
-                                              d_localHostname);
+                                              d_localHostname,
+                                              d_authIntercept);
 
                 {
                     std::lock_guard<std::mutex> lg(d_mutex);

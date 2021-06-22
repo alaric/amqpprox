@@ -36,7 +36,7 @@ class AuthInterceptInterface {
     mutable std::mutex       d_mutex;
 
   public:
-    typedef std::function<void(const boost::system::error_code &returnCode,
+    typedef std::function<void(const boost::system::error_code &ec,
                                const std::string &              responseText)>
         ReceiveResponseCb;
 

@@ -37,12 +37,14 @@
 
 #define SOCKET_TESTING 1
 
+#include <amqpprox_authinterceptinterface.h>
 #include <amqpprox_backendset.h>
 #include <amqpprox_bufferpool.h>
 #include <amqpprox_connectionmanager.h>
 #include <amqpprox_connectionselector.h>
 #include <amqpprox_connectorutil.h>
 #include <amqpprox_constants.h>
+#include <amqpprox_defaultauthintercept.h>
 #include <amqpprox_dnsresolver.h>
 #include <amqpprox_eventsource.h>
 #include <amqpprox_hostnamemapper.h>
@@ -108,25 +110,26 @@ boost::asio::ip::tcp::endpoint makeEndpoint(const std::string &str,
 
 class SessionTest : public ::testing::Test {
   protected:
-    boost::asio::io_service             d_ioService;
-    BufferPool                          d_pool;
-    Backend                             d_backend1;
-    Backend                             d_backend2;
-    Backend                             d_backend3;
-    std::shared_ptr<HostnameMapperMock> d_mapper;
-    DNSResolver                         d_dnsResolver;
-    SelectorMock                        d_selector;
-    RobinBackendSelector                d_robinSelector;
-    std::shared_ptr<ConnectionManager>  d_cm;
-    EventSource                         d_eventSource;
-    TestSocketState                     d_clientState;
-    TestSocketState                     d_serverState;
-    SocketInterceptTestAdaptor          d_clientSocketAdaptor;
-    SocketInterceptTestAdaptor          d_serverSocketAdaptor;
-    SocketIntercept                     d_client;
-    SocketIntercept                     d_server;
-    std::vector<uint8_t>                d_protocolHeader;
-    int                                 d_step;
+    boost::asio::io_service                 d_ioService;
+    BufferPool                              d_pool;
+    Backend                                 d_backend1;
+    Backend                                 d_backend2;
+    Backend                                 d_backend3;
+    std::shared_ptr<HostnameMapperMock>     d_mapper;
+    DNSResolver                             d_dnsResolver;
+    SelectorMock                            d_selector;
+    RobinBackendSelector                    d_robinSelector;
+    std::shared_ptr<ConnectionManager>      d_cm;
+    EventSource                             d_eventSource;
+    TestSocketState                         d_clientState;
+    TestSocketState                         d_serverState;
+    SocketInterceptTestAdaptor              d_clientSocketAdaptor;
+    SocketInterceptTestAdaptor              d_serverSocketAdaptor;
+    SocketIntercept                         d_client;
+    SocketIntercept                         d_server;
+    std::vector<uint8_t>                    d_protocolHeader;
+    int                                     d_step;
+    std::shared_ptr<AuthInterceptInterface> d_authIntercept;
 
     SessionTest();
 
@@ -487,7 +490,8 @@ TEST_F(SessionTest, Connection_Then_Ping_Then_Disconnect)
                                              &d_pool,
                                              &d_dnsResolver,
                                              d_mapper,
-                                             LOCAL_HOSTNAME);
+                                             LOCAL_HOSTNAME,
+                                             d_authIntercept);
 
     session->start();
 
@@ -545,7 +549,8 @@ TEST_F(SessionTest, New_Client_Handshake_Failure)
                                              &d_pool,
                                              &d_dnsResolver,
                                              d_mapper,
-                                             LOCAL_HOSTNAME);
+                                             LOCAL_HOSTNAME,
+                                             d_authIntercept);
 
     session->start();
 
@@ -606,7 +611,8 @@ TEST_F(SessionTest, Connection_To_Proxy_Protocol)
                                              &d_pool,
                                              &d_dnsResolver,
                                              d_mapper,
-                                             LOCAL_HOSTNAME);
+                                             LOCAL_HOSTNAME,
+                                             d_authIntercept);
 
     session->start();
 
@@ -746,7 +752,8 @@ TEST_F(SessionTest, Connect_Multiple_Dns)
                                              &d_pool,
                                              &d_dnsResolver,
                                              d_mapper,
-                                             LOCAL_HOSTNAME);
+                                             LOCAL_HOSTNAME,
+                                             d_authIntercept);
 
     session->start();
 
@@ -894,7 +901,8 @@ TEST_F(SessionTest, Failover_Dns_Failure)
                                              &d_pool,
                                              &d_dnsResolver,
                                              d_mapper,
-                                             LOCAL_HOSTNAME);
+                                             LOCAL_HOSTNAME,
+                                             d_authIntercept);
 
     session->start();
 
@@ -978,6 +986,7 @@ SessionTest::SessionTest()
                    Constants::protocolHeader() +
                        Constants::protocolHeaderLength())
 , d_step(0)
+, d_authIntercept(std::make_shared<DefaultAuthIntercept>(d_ioService))
 {
     std::vector<BackendSet::Partition> partitions;
     partitions.push_back(
