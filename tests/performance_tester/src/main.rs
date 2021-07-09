@@ -14,10 +14,10 @@
 ** limitations under the License.
 */
 
+use anyhow::Result;
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use std::net::SocketAddr;
-use anyhow::Result;
 
 mod client;
 mod server;
@@ -47,15 +47,16 @@ async fn main() -> Result<()> {
     let opts = PerfTesterOpts::from_args();
     log::info!("Starting performance test of amqpprox");
 
-    let address = opts.server_address.clone();
+    let address = opts.server_address;
     let server = tokio::spawn(async move { server::run_server(address).await });
-    tokio::time::sleep(std::time::Duration::from_secs(1)).await; // TODO 
+    tokio::time::sleep(std::time::Duration::from_millis(1000)).await; // TODO
 
     let mut handles = Vec::new();
     for _ in 0..opts.clients {
-        let address = opts.address.clone();
+        let address = opts.address;
         let message_size = opts.message_size;
-        let handle = tokio::task::spawn_blocking(move || { crate::client::start_client(message_size, address) });
+        let handle =
+            tokio::task::spawn_blocking(move || crate::client::start_client(message_size, address));
         handles.push(handle);
     }
 

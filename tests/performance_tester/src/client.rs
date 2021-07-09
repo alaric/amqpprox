@@ -15,8 +15,8 @@
 */
 
 use amiquip::{Connection, Exchange, Publish};
-use std::net::SocketAddr;
 use anyhow::Result;
+use std::net::SocketAddr;
 
 pub(crate) fn start_client(sz: usize, address: SocketAddr) -> Result<()> {
     let mut connection = Connection::insecure_open(format!("amqp://{}", address).as_str())?;
@@ -28,7 +28,4 @@ pub(crate) fn start_client(sz: usize, address: SocketAddr) -> Result<()> {
     loop {
         exchange.publish(Publish::new(&arr, "hello"))?;
     }
-
-    connection.close()?;
-    Ok(())
 }
