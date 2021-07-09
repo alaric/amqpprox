@@ -18,15 +18,18 @@ use anyhow::Result;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tokio::net::TcpStream;
-use tokio::io::AsyncWriteExt;
 use tokio::io::AsyncReadExt;
 use bytes::BytesMut;
 use futures::StreamExt;
 use futures::SinkExt;
 
-#[derive(Debug)]
+#[derive(thiserror::Error, Debug)]
 enum AMQPCodecError {
+    #[error("Underlying Error: {0}")]
     Underlying(String),
+
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
 }
 
 impl From<std::io::Error> for AMQPCodecError {
@@ -88,7 +91,7 @@ impl tokio_util::codec::Encoder<amq_protocol::frame::AMQPFrame> for AMQPCodec {
              },
             Err(e) => {
                 log::error!("Write error: {:?}", e);
-                return Ok((()));
+                return Ok(());
             }
         }
         }
@@ -102,9 +105,8 @@ impl AMQPCodec {
 }
 
 pub async fn process_connection(mut socket: TcpStream) -> Result<()> {
-    //socket.write_all("AMQP\x00\x00\x09\x01".as_bytes()).await?;
     let mut buf: [u8; 8] = [0; 8];
-    socket.read_exact(&mut buf).await?;
+    socket.read_exact(&mut buf).await?; // We ignore if it's correct
 
     log::info!("Protocol header received");
 
@@ -122,7 +124,7 @@ pub async fn process_connection(mut socket: TcpStream) -> Result<()> {
         server_properties: server_props,
     });
     let start = amq_protocol::frame::AMQPFrame::Method(0, amq_protocol::protocol::AMQPClass::Connection(start_method));
-    let res = framed.send(start).await;
+    framed.send(start).await?;
 
     let frame = framed.next().await;
     if let Some(Ok(amq_protocol::frame::AMQPFrame::Method(0, amq_protocol::protocol::AMQPClass::Connection(amq_protocol::protocol::connection::AMQPMethod::StartOk(frame))))) = frame {
@@ -133,7 +135,7 @@ pub async fn process_connection(mut socket: TcpStream) -> Result<()> {
             heartbeat: 60,
         });
         let tune = amq_protocol::frame::AMQPFrame::Method(0, amq_protocol::protocol::AMQPClass::Connection(tune_method));
-        let res = framed.send(tune).await;
+        framed.send(tune).await?;
     }
     else {
         anyhow::bail!("Invalid protocol, received: {:?}", frame);
@@ -150,11 +152,10 @@ pub async fn process_connection(mut socket: TcpStream) -> Result<()> {
     let frame = framed.next().await;
     if let Some(Ok(amq_protocol::frame::AMQPFrame::Method(0, amq_protocol::protocol::AMQPClass::Connection(amq_protocol::protocol::connection::AMQPMethod::Open(frame))))) = frame {
         log::info!("Should be open: {:?}", frame);
-        // TODO send openok
         let openok_method = amq_protocol::protocol::connection::AMQPMethod::OpenOk(amq_protocol::protocol::connection::OpenOk {
         });
         let openok = amq_protocol::frame::AMQPFrame::Method(0, amq_protocol::protocol::AMQPClass::Connection(openok_method));
-        let res = framed.send(openok).await;
+        framed.send(openok).await?;
     }
     else {
         anyhow::bail!("Invalid protocol, received: {:?}", frame);
@@ -169,14 +170,14 @@ pub async fn process_connection(mut socket: TcpStream) -> Result<()> {
                 let channelok_method = amq_protocol::protocol::channel::AMQPMethod::OpenOk(amq_protocol::protocol::channel::OpenOk {
                 });
                 let channelok = amq_protocol::frame::AMQPFrame::Method(channel, amq_protocol::protocol::AMQPClass::Channel(channelok_method));
-                framed.send(channelok).await;
+                framed.send(channelok).await?;
             }
             Ok(amq_protocol::frame::AMQPFrame::Method(0, amq_protocol::protocol::AMQPClass::Connection(amq_protocol::protocol::connection::AMQPMethod::Close(closemsg)))) => {
                 log::info!("Closing connection requested: {:?}", closemsg);
                 let closeok_method = amq_protocol::protocol::connection::AMQPMethod::CloseOk(amq_protocol::protocol::connection::CloseOk {
                 });
                 let closeok = amq_protocol::frame::AMQPFrame::Method(0, amq_protocol::protocol::AMQPClass::Connection(closeok_method));
-                framed.send(closeok).await;
+                framed.send(closeok).await?;
                 return Ok(());
             }
             _ => {}

@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
     env_logger::init();
 
     let opts = PerfTesterOpts::from_args();
-    println!("Hello, world!");
+    log::info!("Starting performance test of amqpprox");
 
     let address = opts.server_address.clone();
     let server = tokio::spawn(async move { server::run_server(address).await });
